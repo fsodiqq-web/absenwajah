@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123b68"><title>Absensi Wajah Sekolah</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="brand-mark">AW</div><div><h1>Absensi Wajah</h1><p>NodeMCU ESP8266 • HP Android • Netlify Database</p></div></header>
+<main>
+<section class="notice"><strong>Prototipe dengan database online</strong><p>Data siswa dan absensi disimpan di Netlify Database. Kamera membutuhkan HTTPS dan koneksi internet. Untuk sementara, data biometrik (descriptor wajah) juga disimpan agar pencocokan dapat dilakukan di HP.</p></section>
+<section class="card">
+<h2>Akses administrator</h2><p class="muted">Masukkan kunci admin yang Anda atur pada Environment Variables Netlify sebagai <code>ABSENSI_ADMIN_KEY</code>.</p>
+<div class="inline"><input id="adminKey" type="password" placeholder="Kunci admin Netlify" autocomplete="current-password"><button id="connectBtn" class="primary">Hubungkan</button></div>
+<p id="apiStatus" class="status">Belum terhubung ke database.</p>
+</section>
+<section class="card">
+<h2>1. Kamera dan absensi</h2><div class="camera-wrap"><video id="video" autoplay muted playsinline></video><div class="camera-placeholder" id="cameraPlaceholder">Kamera belum dinyalakan</div></div>
+<div class="actions"><button id="startCamera" class="primary">Nyalakan kamera</button><button id="stopCamera" class="secondary">Matikan kamera</button></div>
+<p id="modelStatus" class="status">Menunggu pustaka pengenalan wajah…</p>
+<label>Jenis absensi<select id="mode"><option>Masuk</option><option>Pulang</option></select></label>
+<button id="recognizeBtn" class="primary wide" disabled>Kenali wajah & catat absensi</button><p id="recognitionResult" class="result">Hasil pengenalan akan tampil di sini.</p>
+</section>
+<section class="card">
+<h2>2. Daftarkan siswa</h2><p class="muted">Nyalakan kamera dan pastikan hanya satu wajah terlihat.</p>
+<div class="form-grid"><label>Nama siswa<input id="studentName" maxlength="80" placeholder="Nama lengkap"></label><label>NIS<input id="studentNis" maxlength="30" placeholder="Nomor induk"></label><label>Kelas<input id="studentClass" maxlength="30" placeholder="Contoh: X TITL 1"></label></div>
+<button id="registerBtn" class="primary wide" disabled>Daftarkan wajah siswa</button><p id="registerStatus" class="status"></p>
+</section>
+<section class="card"><div class="section-heading"><h2>3. Data siswa</h2><span id="studentCount" class="badge">0 siswa</span></div><div id="studentsList" class="empty">Hubungkan admin untuk memuat data.</div></section>
+<section class="card"><div class="section-heading"><h2>4. Riwayat absensi</h2><span id="recordCount" class="badge">0 catatan</span></div><div class="actions wrap"><button id="refreshBtn" class="secondary">Muat ulang data</button><button id="exportBtn" class="secondary">Unduh CSV</button></div>
+<div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>Jam</th><th>Nama</th><th>NIS</th><th>Kelas</th><th>Status</th></tr></thead><tbody id="attendanceBody"><tr><td colspan="6" class="empty">Belum dimuat.</td></tr></tbody></table></div></section>
+<section class="card"><h2>Catatan penting</h2><ul class="notes">
+<li>Database online memerlukan Netlify Database yang aktif dan paket Netlify yang mendukungnya; fitur ini menggunakan kredit untuk komputasi/bandwidth.</li>
+<li>Jangan gunakan untuk absensi resmi sebelum menguji akurasi, keamanan, cadangan data, dan kontrol akses. Kunci admin pada prototipe ini adalah perlindungan dasar, bukan sistem autentikasi produksi.</li>
+<li>Descriptor wajah adalah data biometrik sensitif. Minta persetujuan yang sesuai, batasi akses, jelaskan tujuan dan masa penyimpanan, serta sediakan metode absensi alternatif.</li>
+<li>Belum ada liveness detection/anti-foto. NodeMCU belum perlu untuk pencocokan wajah; dapat ditambahkan kemudian sebagai indikator LED/buzzer.</li>
+</ul></section>
+</main><footer>Absensi Wajah • Prototipe Netlify</footer>
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script><script defer src="app.js"></script>
+</body></html>

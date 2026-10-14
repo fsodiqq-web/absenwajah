@@ -1,0 +1,13 @@
+{
+  "name": "absensi-wajah-netlify-db",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo 'Static site and Netlify Functions are ready'"
+  },
+  "dependencies": {
+    "@netlify/database": "latest",
+    "@netlify/functions": "latest"
+  }
+}
