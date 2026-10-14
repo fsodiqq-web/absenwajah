@@ -7,13 +7,37 @@ const json = (body: unknown, status = 200) =>
 
 export default async (req: Request) => {
   try {
-    const expected = process.env.ABSENSI_ADMIN_KEY;
-    if (!expected) return json({ error: "ABSENSI_ADMIN_KEY belum diatur pada Environment Variables Netlify." }, 503);
-    if (req.headers.get("x-admin-key") !== expected) return json({ error: "Kunci admin salah atau belum diatur." }, 401);
-
     const url = new URL(req.url);
     const path = url.pathname.replace(/^\/api\/?/, "").replace(/\/$/, "");
     const method = req.method.toUpperCase();
+
+    // Absensi siswa publik: tanpa kunci admin. Pencocokan dilakukan di server.
+    if (path === "public/recognize" && method === "POST") {
+      const body = await req.json() as {descriptor?: number[]; status?: string};
+      const descriptor = body.descriptor;
+      const status = String(body.status ?? "");
+      if (!Array.isArray(descriptor) || descriptor.length !== 128 || !descriptor.every(v => typeof v === "number" && Number.isFinite(v)) || !["Masuk", "Pulang"].includes(status)) return json({ error: "Data wajah atau jenis absensi tidak valid." }, 400);
+      const registered = await db.sql`SELECT name, nis, class_name, descriptor FROM attendance_students`;
+      if (!registered.length) return json({ error: "Belum ada siswa terdaftar. Hubungi admin sekolah." }, 404);
+      let best: any = null; let bestDistance = Infinity;
+      for (const student of registered as Array<{name:string; nis:string; class_name:string; descriptor:number[]|string}>) {
+        let saved: unknown = student.descriptor;
+        if (typeof saved === "string") { try { saved = JSON.parse(saved); } catch { continue; } }
+        if (!Array.isArray(saved) || saved.length !== 128) continue;
+        let sum = 0;
+        for (let i = 0; i < 128; i++) { const a = Number(descriptor[i]), b = Number(saved[i]); if (!Number.isFinite(a) || !Number.isFinite(b)) { sum = Infinity; break; } const delta = a-b; sum += delta*delta; }
+        const distance = Math.sqrt(sum); if (distance < bestDistance) { bestDistance = distance; best = student; }
+      }
+      if (!best || bestDistance > 0.48) return json({ error: "Wajah tidak cocok dengan data siswa. Pastikan wajah sudah didaftarkan admin." }, 403);
+      const duplicate = await db.sql`SELECT id FROM attendance_records WHERE nis = ${best.nis} AND attendance_date = CURRENT_DATE AND status = ${status} LIMIT 1`;
+      if (duplicate.length) return json({ error: "Absensi " + status + " hari ini sudah tercatat untuk siswa ini." }, 409);
+      const rows = await db.sql`INSERT INTO attendance_records (name, nis, class_name, status, distance) VALUES (${best.name}, ${best.nis}, ${best.class_name}, ${status}, ${Number(bestDistance.toFixed(3))}) RETURNING id, attendance_date::text AS date, to_char(attendance_time, 'HH24:MI:SS') AS time, name, nis, class_name AS cls, status, distance`;
+      return json({ record: rows[0] }, 201);
+    }
+
+    const expected = process.env.ABSENSI_ADMIN_KEY;
+    if (!expected) return json({ error: "ABSENSI_ADMIN_KEY belum diatur pada Environment Variables Netlify." }, 503);
+    if (req.headers.get("x-admin-key") !== expected) return json({ error: "Kunci admin salah atau belum diatur." }, 401);
 
     if (path === "students" && method === "GET") {
       const rows = await db.sql`
