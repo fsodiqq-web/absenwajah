@@ -4,3 +4,10 @@
 
 [functions]
   node_bundler = "esbuild"
+
+# Halaman admin: jangan diindeks mesin pencari dan jangan di-cache
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Cache-Control = "no-store"

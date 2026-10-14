@@ -1,0 +1,79 @@
+ABSENSI WAJAH — VERSI NETLIFY GRATIS
+====================================
+
+Tujuan:
+Menjalankan prototipe absensi wajah dengan hosting Netlify dan Netlify Database pada paket Free ($0), selama penggunaan masih di dalam batas kredit bulanan.
+
+FILE PROYEK
+- index.html, style.css, app.js: aplikasi web responsif.
+- netlify/functions/api.mts: API server-side.
+- netlify/database/migrations/0001_create_attendance_tables.sql: struktur tabel siswa dan absensi.
+- netlify.toml, package.json: konfigurasi deploy.
+
+BIAYA DAN BATAS PAKET GRATIS
+- Netlify Free berharga $0 dan menyediakan 300 kredit per bulan pada paket berbasis kredit.
+- Netlify Database memakai kredit untuk compute dan bandwidth; penggunaan tetap harus dipantau.
+- Pada paket Free, database memiliki batas 3 database per akun, 1 compute unit, retensi backup terbatas, serta batas penggunaan data sesuai dokumentasi Netlify.
+- Jika kredit atau batas layanan tercapai, proyek dapat dijeda sampai siklus berikutnya. Jangan aktifkan paket berbayar atau auto-recharge jika tujuan Anda tetap gratis.
+- Periksa halaman Usage & billing di akun Netlify untuk memastikan pemakaian dan paket yang aktif.
+
+CARA DEPLOY DARI HP ANDROID
+1. Ekstrak ZIP.
+2. Buat repository GitHub baru dan unggah SEMUA file/folder proyek dengan struktur tetap sama.
+3. Masuk Netlify: https://app.netlify.com/
+4. Pilih Add new project / Import from Git, lalu hubungkan repository GitHub.
+5. Pastikan build command: npm run build; publish directory: . (titik); folder Functions: netlify/functions.
+6. Aktifkan Netlify Database untuk proyek. Karena package @netlify/database dan folder migrasi sudah disertakan, Netlify dapat menyediakan database dan menjalankan migrasi pada proses deploy sesuai dokumentasi.
+7. Di pengaturan Environment variables proyek, buat:
+   ABSENSI_ADMIN_KEY = kunci rahasia panjang dan acak yang Anda buat sendiri.
+8. Deploy ulang setelah database dan environment variable siap.
+9. Buka URL HTTPS Netlify di Chrome HP.
+10. Masukkan kunci admin, tekan Hubungkan, lalu nyalakan kamera, daftarkan siswa percobaan, dan uji absensi.
+
+TAUTAN RESMI
+- Harga/paket Netlify: https://www.netlify.com/pricing/
+- Netlify Database: https://docs.netlify.com/build/data-and-storage/netlify-database/
+- Panduan memulai database: https://docs.netlify.com/build/data-and-storage/netlify-database/getting-started/
+
+CATATAN PENTING
+- Ini adalah paket kode yang disiapkan untuk dideploy; belum dideploy atau diuji di akun Netlify Anda.
+- Data wajah disimpan sebagai descriptor biometrik, bukan foto mentah. Descriptor tetap merupakan data biometrik sensitif.
+- Pengenalan dilakukan di browser HP dan membutuhkan internet untuk memuat pustaka/model. Belum ada liveness detection/anti-foto.
+- Kunci admin adalah pengamanan dasar prototipe, bukan autentikasi produksi. Untuk penggunaan sekolah resmi, tambahkan login yang layak, hak akses, pencatatan audit, backup, dan prosedur penghapusan data.
+- NodeMCU ESP8266 belum terhubung langsung dengan aplikasi versi ini. Ia bisa ditambahkan kemudian sebagai indikator LED/buzzer atau perangkat terminal.
+- Pastikan ada persetujuan yang sesuai, batasi akses data wajah, dan sediakan metode absensi alternatif.
+
+
+PEMBARUAN PENCEGAHAN WAJAH GANDA
+--------------------------------
+Versi ini menambahkan pemeriksaan kemiripan descriptor wajah di fungsi server sebelum data siswa disimpan. Jika jarak descriptor <= 0,48 dari wajah yang sudah ada, pendaftaran ditolak. Ambang ini perlu diuji pada kondisi kamera/pencahayaan sekolah; sistem pengenalan wajah bisa salah cocok atau gagal cocok dan bukan bukti identitas yang sempurna.
+
+CARA MEMASANG PEMBARUAN KE PROYEK NETLIFY YANG SUDAH ADA
+1. Ekstrak ZIP ini.
+2. Di repositori GitHub yang sudah terhubung ke proyek Netlify, ganti file netlify/functions/api.mts dengan versi dari ZIP ini.
+3. Commit perubahan ke branch yang digunakan untuk Production (biasanya main). Netlify biasanya akan deploy otomatis.
+4. Buka Netlify > Deploys dan tunggu status Published. Tidak perlu membuat proyek baru atau menghapus database.
+5. Uji pendaftaran dengan wajah yang sudah ada tetapi gunakan NIS berbeda; server seharusnya menolak jika terdeteksi cocok.
+
+CATATAN: Pemeriksaan ini mencegah pendaftaran wajah mirip untuk pendaftaran baru. Data duplikat yang sudah terlanjur ada tidak dihapus otomatis. Jangan hapus data database produksi tanpa membuat cadangan terlebih dahulu.
+
+
+PEMBARUAN: ABSENSI SISWA TANPA LOGIN
+- Siswa membuka website, menyalakan kamera, memilih Masuk/Pulang, lalu menekan ABSEN SEKARANG.
+- Siswa tidak memerlukan kunci admin. Wajah harus sudah didaftarkan admin.
+- Endpoint /api/public/recognize mencocokkan descriptor di server dan mencatat absensi.
+- Daftar wajah tidak dikirim ke browser siswa pada alur absensi publik.
+- Unggah pembaruan ke repositori GitHub yang sama, lalu tunggu Netlify deploy otomatis.
+- Jangan menghapus migrasi database yang sudah ada.
+- Prototipe ini belum memiliki liveness/anti-foto, pembatasan jadwal, atau autentikasi sekolah yang kuat; uji terbatas sebelum digunakan resmi.
+
+
+PEMBARUAN: WEBSITE SISWA DAN ADMIN DIPISAH
+------------------------------------------
+- Halaman SISWA : https://NAMA-SITUS.netlify.app/        (hanya absensi, tanpa login)
+- Halaman ADMIN : https://NAMA-SITUS.netlify.app/admin/   (login kunci admin, daftar wajah, data siswa, riwayat, CSV)
+- Halaman siswa tidak lagi memuat kode admin dan tidak ada tautan ke halaman admin. Alamat /admin/ cukup Anda simpan sendiri (bookmark).
+- Halaman admin tidak diindeks mesin pencari (noindex) dan tidak di-cache; isinya baru tampil setelah kunci admin benar.
+- Berkas baru/berubah: index.html (siswa), app.js (siswa), face-common.js (bersama), admin/index.html, admin/admin.js, style.css, netlify.toml.
+- netlify/functions/api.mts dan migrasi database TIDAK berubah. Database dan ABSENSI_ADMIN_KEY tetap dipakai.
+- Cara memasang: ganti/unggah semua berkas di atas ke repositori GitHub yang sama (folder admin/ ikut diunggah), commit ke main, tunggu Netlify Published.
